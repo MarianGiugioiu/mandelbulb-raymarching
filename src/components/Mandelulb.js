@@ -1,8 +1,8 @@
 import React, { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import vertexShader from '../shaders/vertex.js';
-import fragmentShader from '../shaders/fragment.js';
+import vertexShader from '../shaders/mandelbulb/vertex.js';
+import fragmentShader from '../shaders/mandelbulb/fragment.js';
 
 export default function Mandelbulb() {
   const meshRef = useRef();
