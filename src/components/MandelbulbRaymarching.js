@@ -15,6 +15,13 @@ export default function MandelbulbRaymarching() {
     }
   });
 
+  function onMouseMove(event) {
+    materialRef.current.uniforms.u_mouse.value.x = event.clientX;
+    materialRef.current.uniforms.u_mouse.value.y = event.clientY; // Invert Y axis
+  }
+
+  window.addEventListener('mousemove', onMouseMove, false);
+
   return (
     <mesh ref={meshRef} castShadow receiveShadow>
       <planeGeometry args={[viewport.width, viewport.height]} />
@@ -25,7 +32,8 @@ export default function MandelbulbRaymarching() {
         fragmentShader={fragmentShader}
         uniforms={{ 
           u_time: { value: 0 },
-          u_resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }
+          u_resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+          u_mouse: { value: new THREE.Vector2(0, 0) }
         }}
       />
     </mesh>

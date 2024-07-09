@@ -3,10 +3,33 @@ precision highp float;
 
 uniform vec2 u_resolution;
 uniform float u_time;
+uniform vec2 u_mouse;
 
 const int MAX_STEPS = 100;
 const float MAX_DISTANCE = 100.0;
 const float SURFACE_DISTANCE = 0.001;
+
+// Function to apply rotation around the Y axis
+mat3 rotateY(float angle) {
+    float s = sin(angle);
+    float c = cos(angle);
+    return mat3(
+        c, 0.0, -s,
+        0.0, 1.0, 0.0,
+        s, 0.0, c
+    );
+}
+
+// Function to apply rotation around the X axis
+mat3 rotateX(float angle) {
+    float s = sin(angle);
+    float c = cos(angle);
+    return mat3(
+        1.0, 0.0, 0.0,
+        0.0, c, -s,
+        0.0, s, c
+    );
+}
 
 // Function to calculate the distance estimator for the Mandelbulb
 float mandelbulb(vec3 pos) {
@@ -58,12 +81,24 @@ vec3 getNormal(vec3 p) {
     return normalize(n);
 }
 
-// Function to calculate lighting
-vec3 getLight(vec3 p, vec3 normal) {
+// Function to convert HSV to RGB
+vec3 hsv2rgb(vec3 c) {
+    vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+    vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
+    return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+}
+
+// Function to calculate lighting and color
+vec3 getColor(vec3 p, vec3 normal) {
     vec3 lightPos = vec3(5.0, 5.0, 5.0);
     vec3 lightDir = normalize(lightPos - p);
     float diff = max(dot(normal, lightDir), 0.0);
-    return vec3(1.0, 0.8, 0.6) * diff; // Basic diffuse lighting
+
+    // Calculate color based on position and time
+    float hue = mod(length(p) + u_time * 0.1, 1.0);
+    vec3 color = hsv2rgb(vec3(hue, 1.0, diff));
+
+    return color;
 }
 
 void main() {
@@ -72,14 +107,34 @@ void main() {
     vec3 ro = vec3(0.0, 0.0, 5.0); // Ray origin
     vec3 rd = normalize(vec3(uv, -1.0)); // Ray direction
 
-    float d = raymarch(ro, rd);
-    if (d < MAX_DISTANCE) {
-        vec3 p = ro + rd * d;
+    // Calculate rotation angle based on mouse position
+    float rotationY = (u_mouse.x / u_resolution.x - 0.5) * 6.28; // Rotate around Y-axis based on mouse X position
+    float rotationX = (u_mouse.y / u_resolution.y - 0.5) * 6.28; // Rotate around X-axis based on mouse Y position
+
+    // Rotate the position being evaluated in the Mandelbulb distance function
+    vec3 rayDir = rd;
+    float distance = 0.0;
+    for (int i = 0; i < MAX_STEPS; i++) {
+        vec3 p = ro + rayDir * distance;
+        // Apply rotations to the position
+        p = rotateY(rotationY) * p;
+        p = rotateX(rotationX) * p;
+        float d = mandelbulb(p);
+        distance += d;
+        if (d < SURFACE_DISTANCE || distance > MAX_DISTANCE) break;
+    }
+
+    if (distance < MAX_DISTANCE) {
+        vec3 p = ro + rayDir * distance;
+        // Apply rotations to the position for normal calculation
+        p = rotateY(rotationY) * p;
+        p = rotateX(rotationX) * p;
         vec3 normal = getNormal(p);
-        vec3 color = getLight(p, normal);
+        vec3 color = getColor(p, normal);
         gl_FragColor = vec4(color, 1.0);
     } else {
         gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0); // Background color
     }
 }
+
 `
