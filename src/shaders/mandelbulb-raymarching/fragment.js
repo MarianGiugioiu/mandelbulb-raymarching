@@ -52,17 +52,6 @@ float mandelbulb(vec3 pos) {
     return 0.5 * log(r) * r / dr;
 }
 
-float raymarch(vec3 ro, vec3 rd) {
-    float distance = 0.0;
-    for (int i = 0; i < MAX_STEPS; i++) {
-        vec3 p = ro + rd * distance;
-        float d = mandelbulb(p);
-        distance += d;
-        if (d < SURFACE_DISTANCE || distance > MAX_DISTANCE) break;
-    }
-    return distance;
-}
-
 vec3 getNormal(vec3 p) {
     float d = mandelbulb(p);
     vec2 e = vec2(0.001, 0);
