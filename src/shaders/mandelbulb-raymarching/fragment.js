@@ -5,6 +5,8 @@ uniform vec2 u_mouse;
 uniform float u_zoom;
 uniform vec2 u_translation;
 
+#define PI 3.14159265359
+
 const int MAX_STEPS = 100;
 const float MAX_DISTANCE = 100.0;
 const float SURFACE_DISTANCE = 0.001;
@@ -79,6 +81,13 @@ vec3 getColor(vec3 p, vec3 normal) {
     return color;
 }
 
+float smoothMod(float axis, float amp, float rad){
+    float top = cos(PI * (axis / amp)) * sin(PI * (axis / amp));
+    float bottom = pow(sin(PI * (axis / amp)), 2.0) + pow(rad, 2.0);
+    float at = atan(top / bottom);
+    return amp * (1.0 / 2.0) - (1.0 / PI) * at;
+}
+
 void main() {
     vec2 uv = (gl_FragCoord.xy - u_resolution.xy * 0.5) / u_resolution.y;
 
@@ -97,6 +106,11 @@ void main() {
         p = rotateY(rotationY) * p;
         p = rotateX(rotationX) * p;
 
+        // Apply smoother wave animation to the z coordinate
+        p.z += smoothMod(sin(u_time * 2.0 + p.z * 4.0) * 0.2 * 1.0, 2.5, 1.5) - smoothMod(sin(p.z * 4.0) * 0.2 * 1.0, 2.5, 1.5);
+        p.y += smoothMod(sin(u_time * 2.0 + p.y * 4.0) * 0.2 * 1.0, 2.5, 1.5) - smoothMod(sin(p.y * 4.0) * 0.2 * 1.0, 2.5, 1.5);
+        p.x += smoothMod(sin(u_time * 2.0 + p.x * 4.0) * 0.2 * 1.0, 2.5, 1.5) - smoothMod(sin(p.x * 4.0) * 0.2 * 1.0, 2.5, 1.5);
+
         float d = mandelbulb(p);
         distance += d;
         if (d < SURFACE_DISTANCE || distance > MAX_DISTANCE) break;
@@ -107,6 +121,11 @@ void main() {
         p = rotateY(rotationY) * p;
         p = rotateX(rotationX) * p;
 
+        // Apply smoother wave animation to the z coordinate
+        p.z += smoothMod(sin(u_time * 2.0 + p.z * 4.0) * 0.2 * 1.0, 2.5, 1.5) - smoothMod(sin(p.z * 4.0) * 0.2 * 1.0, 2.5, 1.5);
+        p.y += smoothMod(sin(u_time * 2.0 + p.y * 4.0) * 0.2 * 1.0, 2.5, 1.5) - smoothMod(sin(p.y * 4.0) * 0.2 * 1.0, 2.5, 1.5);
+        p.x += smoothMod(sin(u_time * 2.0 + p.x * 4.0) * 0.2 * 1.0, 2.5, 1.5) - smoothMod(sin(p.x * 4.0) * 0.2 * 1.0, 2.5, 1.5);
+
         vec3 normal = getNormal(p);
         vec3 color = getColor(p, normal);
         gl_FragColor = vec4(color, 1.0);
@@ -114,5 +133,6 @@ void main() {
         gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
     }
 }
+
 
 `
