@@ -14,9 +14,9 @@ export default function MandelbulbRaymarching() {
       const elapsedTime = clock.getElapsedTime();
     
       // Oscillate between 3 and 20 using the sine function
-      const min = 3;
-      const max = 15;
-      const startValue = 3;
+      const min = 1;
+      const max = 11;
+      const startValue = 1;
       const range = (max - min) / 2;
       const mid = (max + min) / 2;
       const startPhase = Math.asin((startValue - mid) / range);
