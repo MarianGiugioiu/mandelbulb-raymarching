@@ -35,18 +35,19 @@ float mandelbulb(vec3 pos) {
     vec3 z = pos;
     float dr = 1.0;
     float r = 0.0;
-    const int iterations = 8;
+    float power = 7.0;
+    const int iterations = 10;
     for (int i = 0; i < iterations; i++) {
         r = length(z);
         if (r > 2.0) break;
 
         float theta = acos(z.z / r);
         float phi = atan(z.y, z.x);
-        dr = pow(r, 7.0 - 1.0) * 7.0 * dr + 1.0;
+        dr = pow(r, power - 1.0) * power * dr + 1.0;
 
-        float zr = pow(r, 7.0);
-        theta = theta * 7.0;
-        phi = phi * 7.0;
+        float zr = pow(r, power);
+        theta = theta * power;
+        phi = phi * power;
 
         z = zr * vec3(sin(theta) * cos(phi), sin(phi) * sin(theta), cos(theta));
         z += pos;
