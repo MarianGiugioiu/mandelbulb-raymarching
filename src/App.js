@@ -14,8 +14,8 @@ function App() {
     <Canvas style={{ width: '100%', height: '100vh' }} shadows>
       <ambientLight intensity={0.2}/>
       <pointLight position={[10, 10, 10]} castShadow intensity={0.8}/>
-      {/* <MandelbulbRaymarching /> */}
-      <Mandelbrot/>
+      <MandelbulbRaymarching />
+      {/* <Mandelbrot/> */}
       {/* <Mandelbulb /> */}
       {/* <PlaneComponent /> */}
       {/* <OrbitControls/> */}

@@ -11,7 +11,18 @@ export default function MandelbulbRaymarching() {
 
   useFrame(({ clock }) => {
     if (meshRef.current) {
-      materialRef.current.uniforms.u_time.value = clock.getElapsedTime();
+      const elapsedTime = clock.getElapsedTime();
+    
+      // Oscillate between 3 and 20 using the sine function
+      const min = 3;
+      const max = 15;
+      const startValue = 3;
+      const range = (max - min) / 2;
+      const mid = (max + min) / 2;
+      const startPhase = Math.asin((startValue - mid) / range);
+      const value = mid + range * Math.sin(elapsedTime / 10 + startPhase);
+      materialRef.current.uniforms.u_power.value = value;
+      materialRef.current.uniforms.u_time.value = elapsedTime;
     }
   });
 
@@ -78,7 +89,8 @@ export default function MandelbulbRaymarching() {
           u_resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
           u_mouse: { value: new THREE.Vector2(0, 0) },
           u_zoom: { value: 1.0 },
-          u_translation: { value: new THREE.Vector2(0, 0) }
+          u_translation: { value: new THREE.Vector2(0, 0) },
+          u_power: { value: 7.0 }
         }}
       />
     </mesh>
