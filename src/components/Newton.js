@@ -1,5 +1,5 @@
-import React, { useRef, useEffect, useCallback, useState } from 'react';
-import { useFrame, useThree } from '@react-three/fiber';
+import React, { useEffect, useRef, useState } from 'react';
+import { useThree } from '@react-three/fiber';
 import vertexShader from '../shaders/newton/vertex.js';
 import fragmentShader from '../shaders/newton/fragment.js';
 import * as THREE from 'three';
@@ -17,8 +17,8 @@ function Grid(props) {
     <>
       <Line
         points={[
-          [-xMax * scaleFactor, 0, 1], // Start slightly outside -3
-          [xMax * scaleFactor, 0, 1],  // End slightly outside 3
+          [-xMax * scaleFactor, 0, 1],
+          [xMax * scaleFactor, 0, 1],
         ]}
         color="white"
         lineWidth={2}
@@ -26,8 +26,8 @@ function Grid(props) {
 
       <Line
         points={[
-          [0, -xMax * scaleFactor, 1], // Start slightly outside -3
-          [0, xMax * scaleFactor, 1],  // End slightly outside 3
+          [0, -xMax * scaleFactor, 1],
+          [0, xMax * scaleFactor, 1],
         ]}
         color="white"
         lineWidth={2}
@@ -67,7 +67,7 @@ function Grid(props) {
           <>
             <Text
               key={value + "-x"}
-              position={[value * scaleFactor - 0.3, -0.3, 0]} // X-axis label below
+              position={[value * scaleFactor - 0.3, -0.3, 0]}
               fontSize={0.3}
               color="white"
               textAlign="center"
@@ -77,7 +77,7 @@ function Grid(props) {
             {value !== 0 ? (
               <Text
                 key={value + "-y"}
-                position={[-0.3, value * scaleFactor - 0.3, 0]} // Y-axis label on the left
+                position={[-0.3, value * scaleFactor - 0.3, 0]}
                 fontSize={0.3}
                 color="white"
                 textAlign="center"
@@ -93,18 +93,17 @@ function Grid(props) {
 }
 
 function Points(props) {
-  const { points, setPoints, xMax, yMax, scaleFactor, height, width } = props;
+  const { points, setPoints, xMax, scaleFactor, width } = props;
 
   const handleMouseDown = (index, event) => {
+    if (event.button !== 0) {
+      return;
+    }
     const startX = event.clientX;
     const startY = event.clientY;
     const xScaleFactor = xMax * 2 / width;
 
     const onMouseMove = (moveEvent) => {
-      if (event.button !== 0) {
-        return;
-      }
-      
       const deltaX = (moveEvent.clientX - startX) * xScaleFactor;
       const deltaY = (moveEvent.clientY - startY) * xScaleFactor;
 
@@ -138,7 +137,7 @@ function Points(props) {
             key={index}
             args={[0.1]}
             position={position}
-            onPointerDown={(e) => handleMouseDown(index, e.nativeEvent)} // Start dragging on pointer down
+            onPointerDown={(e) => handleMouseDown(index, e.nativeEvent)}
           >
             <meshStandardMaterial color="blue" />
           </Sphere>
@@ -184,12 +183,7 @@ function NewtonFractal(props) {
     const values = new Array(10).fill(new THREE.Vector2());
     points?.map((point, index) => values[index] = new THREE.Vector2(point.x * scaleFactor, point.y * scaleFactor));
     shaderMaterial.uniforms.u_roots.value = values;
-  }, [points]);
-
-  // useEffect(() => {
-  //   shaderMaterial.uniforms.u_z_min.value = new THREE.Vector2(-xMax, -yMax);
-  //   shaderMaterial.uniforms.u_z_max.value = new THREE.Vector2(xMax, yMax);
-  // }, [yMax]);
+  }, [points, scaleFactor]);
 
   useEffect(() => {
     shaderMaterial.uniforms.u_z_min.value = new THREE.Vector2(zMin.x, zMin.y);
@@ -212,22 +206,14 @@ export default function Newton(props) {
   const { canvasRef, zoom } = props;
   const { width, height } = canvasRef.current.getBoundingClientRect();
 
-  const [ xMax, setXMax] = useState(3.4);
+  const [xMax, setXMax] = useState(3.4);
   const scaleFactorValue = viewport.width / (2 * 3.4);
   const yMaxValue = viewport.height / (2 * scaleFactorValue);
   const [scaleFactor, setScaleFactor] = useState(scaleFactorValue);
   const [yMax, setYMax] = useState(yMaxValue);
 
-  const [zMin, setZMin] = useState({ x: -xMax, y: -yMaxValue });
-  const [zMax, setZMax] = useState({ x: xMax, y: yMaxValue });
-
-  const [isPanning, setIsPanning] = useState(false);
-  const [lastMouse, setLastMouse] = useState(null);
-
-  const [zoomFactor, setZoomFactor] = useState(1);
-  const [deltaX, setDeltaX] = useState(0);
-  const [deltaY, setDeltaY] = useState(0);
-
+  const [zMin] = useState({ x: -xMax, y: -yMaxValue });
+  const [zMax] = useState({ x: xMax, y: yMaxValue });
 
   const generateRandomPoints = (numPoints) => {
     const points = [];
@@ -239,57 +225,51 @@ export default function Newton(props) {
     return points;
   };
 
-  // useFrame(({ clock }) => {
-  //   const elapsedTime = clock.getElapsedTime() / 1000;
-  //   const newPoints = points.map(point => {
-  //     point.x += (Math.random() > 0.5 ? 1 : -1) * Math.sin(elapsedTime) / 100;
-  //     point.y += (Math.random() > 0.5 ? 1 : -1) * Math.cos(elapsedTime) / 100;
-  //     return point
-  //   });
-
-  //   setPoints(newPoints);
-  // });
-
-  const handleMouseDown = (event) => {
-    if (event.button === 2) {
-      setIsPanning(true);
-      setLastMouse({ x: event.clientX, y: event.clientY });
-    }
-  };
-
-  const handleMouseUp = () => {
-    setIsPanning(false);
-    setLastMouse(null);
-  };
-
-  const handleMouseMove = (event) => {
-    if (isPanning && lastMouse) {
-      const xScaleFactor = xMax * 2 / width;
-      const dx = (event.clientX - lastMouse.x) * xScaleFactor;
-      const dy = (event.clientY - lastMouse.y) * xScaleFactor;
-      setDeltaX(dx);
-      setDeltaY(dy);
-      setLastMouse({ x: event.clientX, y: event.clientY });
-    }
-  };
-
+  const handleMouseDownRef = useRef(null);
   useEffect(() => {
-    window.addEventListener('mousedown', handleMouseDown);
-    window.addEventListener('mouseup', handleMouseUp);
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => {
-      window.removeEventListener('mousedown', handleMouseDown);
-      window.removeEventListener('mouseup', handleMouseUp);
-      window.removeEventListener('mousemove', handleMouseMove);
+    handleMouseDownRef.current = (event) => {
+      if (event.button !== 2) {
+        return;
+      }
+      const startX = event.clientX;
+      const startY = event.clientY;
+      const xScaleFactor = xMax * 2 / width;
+
+      const onMouseMove = (moveEvent) => {
+
+        const deltaX = (moveEvent.clientX - startX) * xScaleFactor;
+        const deltaY = (moveEvent.clientY - startY) * xScaleFactor;
+        const updatedPoints = points.map(point => {
+          return {
+            x: point.x + deltaX,
+            y: point.y - deltaY,
+          };
+        });
+
+        setPoints(updatedPoints);
+      };
+
+      const onMouseUp = () => {
+        window.removeEventListener("mousemove", onMouseMove);
+        window.removeEventListener("mouseup", onMouseUp);
+      };
+
+      window.addEventListener("mousemove", onMouseMove);
+      window.addEventListener("mouseup", onMouseUp);
     };
-  }, [isPanning, lastMouse]);
+  }, [points, xMax, width]);
 
   useEffect(() => {
     const preventContextMenu = (event) => event.preventDefault();
-
     window.addEventListener('contextmenu', preventContextMenu);
+    const handler = (event) => {
+      handleMouseDownRef.current?.(event);
+    };
+    window.addEventListener("mousedown", handler);
+
     return () => {
       window.removeEventListener('contextmenu', preventContextMenu);
+      window.removeEventListener("mousedown", handler);
     };
   }, []);
 
@@ -309,35 +289,24 @@ export default function Newton(props) {
     if (zoomIn) {
       zoomFactorVal = 0.95;
     }
-    setZoomFactor(prevVal => prevVal * zoomFactorVal);
     setXMax(prevXMax => prevXMax * zoomFactorVal);
-    // setZMin(prev => ({ x: prev.x * zoomFactor, y: prev.y * zoomFactor }));
-    // setZMax(prev => ({ x: prev.x * zoomFactor, y: prev.y * zoomFactor }));
-  }, [zoom])
+  }, [zoom]);
 
   useEffect(() => {
     setScaleFactor(viewport.width / (2 * xMax))
-  }, [xMax]);
+  }, [xMax, viewport]);
 
   useEffect(() => {
     setYMax(viewport.height / (2 * scaleFactor));
-  }, [scaleFactor]);
+  }, [scaleFactor, viewport]);
 
   useEffect(() => {
     setPoints(generateRandomPoints(pointsNumber));
   }, [pointsNumber]);
 
-  useEffect(() => {
-    setPoints(prev => prev.map(point => {
-      point.x += deltaX;
-      point.y -= deltaY;
-      return point;
-    }));
-  }, [deltaX, deltaY])
-
   return (
     <>
-      <NewtonFractal points={points} scaleFactor={scaleFactor} xMax={xMax} yMax={yMax} zMax={zMax} zMin={zMin} deltaX={deltaX} deltaY={deltaY} />
+      <NewtonFractal points={points} scaleFactor={scaleFactor} xMax={xMax} yMax={yMax} zMax={zMax} zMin={zMin} />
       {/* <Grid xMax={xMax} scaleFactor={scaleFactor} /> */}
       <Points points={points} setPoints={setPoints} xMax={xMax} yMax={yMax} width={width} height={height} scaleFactor={scaleFactor} />
     </>
